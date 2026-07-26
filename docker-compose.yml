@@ -1,0 +1,76 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: disponibilidade-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - disponibilidade-db:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/001-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [disponibilidade-net]
+
+  api:
+    build: ./app
+    container_name: disponibilidade-api
+    restart: unless-stopped
+    command: ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    ports:
+      - "8620:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [disponibilidade-net]
+
+  worker:
+    build: ./app
+    container_name: disponibilidade-worker
+    restart: unless-stopped
+    command: ["python", "worker.py"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      CHECK_INTERVAL_SECONDS: ${CHECK_INTERVAL_SECONDS:-60}
+      REQUEST_TIMEOUT_SECONDS: ${REQUEST_TIMEOUT_SECONDS:-10}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [disponibilidade-net]
+
+  grafana:
+    image: grafana/grafana:12.0.2
+    container_name: disponibilidade-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "3000:3000"
+    volumes:
+      - disponibilidade-grafana:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [disponibilidade-net]
+
+volumes:
+  disponibilidade-db:
+  disponibilidade-grafana:
+
+networks:
+  disponibilidade-net:
+    name: disponibilidade-net
+
