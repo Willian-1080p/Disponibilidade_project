@@ -1,0 +1,23 @@
+# Configurações locais e segredos
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Dados e logs locais
+*.log
+data/
+postgres-data/
+grafana-data/
+
+# Sistema e editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
