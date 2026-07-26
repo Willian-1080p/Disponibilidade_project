@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Disponibilidade e Verificação</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">PROJETO</p>
+      <h1>Disponibilidade e Verificação</h1>
+    </div>
+    <nav aria-label="Acessos rápidos">
+      <a href="http://localhost:3000/d/projeto-disponibilidade/central-de-disponibilidade-e-verificacao" target="_blank" rel="noreferrer">Abrir Grafana</a>
+      <a href="/docs" target="_blank" rel="noreferrer">API / Swagger</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="summary" aria-label="Resumo atual">
+      <article class="metric metric-blue">
+        <span>Monitorados</span>
+        <strong id="metric-total">—</strong>
+      </article>
+      <article class="metric metric-green">
+        <span>Online agora</span>
+        <strong id="metric-online">—</strong>
+      </article>
+      <article class="metric metric-red">
+        <span>Offline agora</span>
+        <strong id="metric-offline">—</strong>
+      </article>
+      <article class="metric metric-yellow">
+        <span>Alertas</span>
+        <strong id="metric-warning">—</strong>
+      </article>
+    </section>
+
+    <section class="toolbar">
+      <div class="tabs" role="tablist" aria-label="Seções do painel">
+        <button class="tab active" role="tab" aria-selected="true" data-view="overview">Visão geral</button>
+        <button class="tab" role="tab" aria-selected="false" data-view="targets">Alvos</button>
+        <button class="tab" role="tab" aria-selected="false" data-view="agents">Agentes</button>
+      </div>
+      <button class="button button-secondary" id="refresh-button">Atualizar dados</button>
+    </section>
+
+    <div id="notice" class="notice hidden" role="status"></div>
+
+    <section class="view active" id="view-overview">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">OPERAÇÃO</p>
+          <h2>Situação atual</h2>
+        </div>
+        <span id="last-refresh">Aguardando atualização</span>
+      </div>
+      <div id="status-grid" class="status-grid"></div>
+    </section>
+
+    <section class="view" id="view-targets">
+      <div class="split-layout">
+        <article class="panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">NOVO MONITORAMENTO</p>
+              <h2>Cadastrar alvo</h2>
+            </div>
+          </div>
+          <form id="target-form">
+            <label>Nome
+              <input name="name" required minlength="2" maxlength="120" placeholder="Ex.: Servidor RDP">
+            </label>
+            <label>Endereço
+              <input name="target" required minlength="2" maxlength="500" placeholder="192.168.1.10 ou https://site.com">
+            </label>
+            <div class="form-row">
+              <label>Tipo
+                <select name="check_type" id="target-type">
+                  <option value="ping">Ping</option>
+                  <option value="http">HTTP/HTTPS</option>
+                  <option value="tcp">Porta TCP</option>
+                  <option value="ssl">Certificado SSL</option>
+                </select>
+              </label>
+              <label id="port-field">Porta
+                <input name="port" type="number" min="1" max="65535" placeholder="3389">
+              </label>
+            </div>
+            <button class="button button-primary" type="submit">Criar alvo</button>
+          </form>
+        </article>
+
+        <article class="panel table-panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">CADASTRADOS</p>
+              <h2>Alvos</h2>
+            </div>
+            <span id="targets-count">0 itens</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Alvo</th>
+                  <th>Tipo</th>
+                  <th>Status</th>
+                  <th>Latência</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="targets-table"></tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="view" id="view-agents">
+      <div class="split-layout">
+        <article class="panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">NOVO COMPUTADOR</p>
+              <h2>Cadastrar agente</h2>
+            </div>
+          </div>
+          <form id="agent-form">
+            <label>Nome
+              <input name="name" required minlength="2" maxlength="120" placeholder="Ex.: PC Wellington Casa">
+            </label>
+            <label>Local
+              <input name="location" maxlength="120" placeholder="Ex.: Casa, Matriz ou Filial">
+            </label>
+            <label>ID externo do cliente
+              <input name="client_external_id" maxlength="120" placeholder="Opcional nesta fase">
+            </label>
+            <label>Endereço da API para este computador
+              <input name="api_base_url" id="agent-api-base-url" type="url" required maxlength="500" placeholder="Ex.: http://192.168.1.10:8620">
+              <small class="field-help">Se o agente estiver em outro computador, não use localhost. Informe o IP do servidor ou a URL pública.</small>
+            </label>
+            <button class="button button-primary" type="submit">Criar agente e baixar PS1</button>
+          </form>
+        </article>
+
+        <article class="panel table-panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">CADASTRADOS</p>
+              <h2>Agentes</h2>
+            </div>
+            <span id="agents-count">0 itens</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Local</th>
+                  <th>Hostname</th>
+                  <th>IP local</th>
+                  <th>Status</th>
+                  <th>Último sinal</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="agents-table"></tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="token-dialog">
+    <div class="dialog-content">
+      <p class="eyebrow">AGENTE CRIADO</p>
+      <h2>O PowerShell está pronto</h2>
+      <p>O arquivo já foi gerado com a API <code id="created-api-url"></code> e com o token exclusivo deste computador.</p>
+      <div class="token-box">
+        <code id="created-token"></code>
+        <button class="button button-secondary" id="copy-token" type="button">Copiar</button>
+      </div>
+      <p>Execute o arquivo baixado pelo PowerShell como administrador. Ele instalará a tarefa automática de heartbeat.</p>
+      <div class="dialog-actions">
+        <button class="button button-secondary" id="download-agent-script" type="button">Baixar PS1 novamente</button>
+        <button class="button button-primary" id="close-token-dialog" type="button">Entendi e guardei</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="/static/app.js" defer></script>
+</body>
+</html>
